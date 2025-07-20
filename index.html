@@ -669,13 +669,7 @@
             <div class="step payment-section" id="step3">
                 <h2 style="margin-bottom: 30px; color: #333;">Payment</h2>
                 
-                <div class="summary">
-                    <p id="cartTotalDisplay">Fetching your cart total...</p>
-                  </div>
-                
-                  <a id="upiLink" href="#" onclick="handlePaymentClick(event)">
-                    <button id="payButton">Pay via GPay / Paytm / PhonePe</button>
-                  </a>
+                <div id="cartTotalDisplay">Fetching your cart total...</div>
                 
                 <div class="payment-details">
                     <h4 style="margin-bottom: 15px; color: #333;">Payment Instructions:</h4>
@@ -871,7 +865,7 @@ function backToSports() {
         }
 
        
-function proceedToPayment() {
+        function proceedToPayment() {
     // Store the total amount in localStorage before proceeding
     localStorage.setItem("totalAmount", totalAmount.toString());
     
@@ -881,34 +875,103 @@ function proceedToPayment() {
     // Update the payment display immediately
     updatePaymentDisplay();
 }
+
 function updatePaymentDisplay() {
     const cartTotal = localStorage.getItem("totalAmount") || totalAmount.toString();
     const displayElement = document.getElementById("cartTotalDisplay");
-    const upiLink = document.getElementById("upiLink");
-    const payButton = document.getElementById("payButton");
 
     if (cartTotal && !isNaN(cartTotal) && parseFloat(cartTotal) > 0) {
         const amount = parseFloat(cartTotal).toFixed(2);
-        displayElement.textContent = `Total Amount: ₹${amount}`;
-
-        // Set your UPI details
-        const upiId = "shagunverma.2004@oksbi";
-        const payeeName = "Shagun Verma";
-        const transactionNote = "Sports Event Registration 2025";
-
-        // Create UPI link with proper encoding
-        const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
-        
-        // Update the link
-        upiLink.href = upiUrl;
-        payButton.disabled = false;
-        
-        console.log('UPI URL generated:', upiUrl); // For debugging
+        displayElement.innerHTML = `
+            <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: left;">
+                <h3 style="color: #333; margin-bottom: 15px; text-align: center;">💳 Payment Details</h3>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <p style="margin: 5px 0;"><strong>Total Amount:</strong> <span style="color: #4CAF50; font-size: 1.2em;">₹${amount}</span></p>
+                    <p style="margin: 5px 0;"><strong>UPI ID:</strong> <code style="background: #e9ecef; padding: 2px 6px; border-radius: 4px;">shagunverma.2004@oksbi</code></p>
+                    <p style="margin: 5px 0;"><strong>Name:</strong> Shagun Verma</p>
+                    <p style="margin: 5px 0;"><strong>Note:</strong> Sports Event Registration 2025</p>
+                </div>
+                
+                <div style="text-align: center; margin: 20px 0;">
+                    <button onclick="copyUPIDetails()" style="background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px;">
+                        📋 Copy UPI ID
+                    </button>
+                    <button onclick="showQRCode()" style="background: #2196F3; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+                        📱 Show QR Code
+                    </button>
+                </div>
+                
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
+                    <h4 style="color: #856404; margin: 0 0 10px 0;">📱 How to Pay:</h4>
+                    <ol style="color: #856404; line-height: 1.6; margin: 0; padding-left: 20px;">
+                        <li>Open any UPI app (GPay, Paytm, PhonePe, etc.)</li>
+                        <li>Choose "Send Money" or "Pay"</li>
+                        <li>Enter the UPI ID: <strong>shagunverma.2004@oksbi</strong></li>
+                        <li>Enter amount: <strong>₹${amount}</strong></li>
+                        <li>Add note: "Sports Event Registration 2025"</li>
+                        <li>Complete the payment</li>
+                        <li>Copy the transaction ID and paste it below</li>
+                    </ol>
+                </div>
+            </div>
+        `;
     } else {
         displayElement.textContent = "Cart total not found. Please select items first.";
-        upiLink.href = "#";
-        payButton.disabled = true;
     }
+}
+
+
+function copyUPIDetails() {
+    const upiId = "shagunverma.2004@oksbi";
+    
+    // Try to copy to clipboard
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(upiId).then(() => {
+            showNotification('UPI ID copied to clipboard!', 'success');
+        }).catch(() => {
+            fallbackCopy(upiId);
+        });
+    } else {
+        fallbackCopy(upiId);
+    }
+}
+
+function fallbackCopy(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        document.execCommand('copy');
+        showNotification('UPI ID copied to clipboard!', 'success');
+    } catch (err) {
+        showNotification('Please manually copy: shagunverma.2004@oksbi', 'error');
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+function showQRCode() {
+    const cartTotal = localStorage.getItem("totalAmount") || totalAmount.toString();
+    const amount = parseFloat(cartTotal).toFixed(2);
+    const upiId = "shagunverma.2004@oksbi";
+    const payeeName = "Shagun Verma";
+    const note = "Sports Event Registration 2025";
+    
+    // Create UPI payment string for QR
+    const upiString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
+    
+    // For now, show the UPI string - you can integrate a QR code generator library later
+    alert(`QR Code Data:\n\nUPI String: ${upiString}\n\nYou can use any QR code generator to create a QR code with this data, or just pay manually using the UPI ID: ${upiId}`);
+    
+    // Alternative: You could use a free QR code API
+    // const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiString)}`;
+    // window.open(qrUrl, '_blank');
 }
 
 function handlePaymentClick(event) {
@@ -987,8 +1050,16 @@ function makeUPIPayment() {
 
 function completeRegistration() {
     const transactionId = document.getElementById('transactionId').value.trim();
+    
     if (!transactionId) {
-        showNotification('Please enter a valid transaction ID.', 'error');
+        showNotification('Please enter the transaction ID after completing the payment.', 'error');
+        document.getElementById('transactionId').focus();
+        return;
+    }
+
+    if (transactionId.length < 8) {
+        showNotification('Transaction ID seems too short. Please enter the complete transaction ID.', 'error');
+        document.getElementById('transactionId').focus();
         return;
     }
 
@@ -1002,11 +1073,12 @@ function completeRegistration() {
         age: document.getElementById('age').value.trim(),
         gender: document.getElementById('gender').value,
         selectedSports,
-        totalAmount,
+        totalAmount: parseInt(localStorage.getItem("totalAmount") || totalAmount),
         transactionId,
         timestamp: new Date().toLocaleString()
     };
 
+    // Store registration
     registrationDatabase.push(formData);
     localStorage.setItem('registrations', JSON.stringify(registrationDatabase));
 
@@ -1015,22 +1087,7 @@ function completeRegistration() {
     document.getElementById('successModal').style.display = 'block';
 
     updateAdminPanel();
-
-    // Send data to backend to trigger email
-    fetch('http://localhost:3000/register', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-    })
-    .then(res => res.json())
-    .then(response => {
-        console.log('Email send response:', response);
-    })
-    .catch(err => {
-        console.error('Failed to send email:', err);
-    });
+    showNotification('Registration completed successfully!', 'success');
 }
 
 

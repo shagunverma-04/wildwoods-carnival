@@ -870,7 +870,7 @@ function backToSports() {
             proceedBtn.disabled = false;
         }
 
-      // Fixed proceedToPayment function - now stores totalAmount in localStorage
+       
 function proceedToPayment() {
     // Store the total amount in localStorage before proceeding
     localStorage.setItem("totalAmount", totalAmount.toString());
@@ -881,33 +881,111 @@ function proceedToPayment() {
     // Update the payment display immediately
     updatePaymentDisplay();
 }
-
-// New function to update payment display
 function updatePaymentDisplay() {
-    const cartTotal = localStorage.getItem("totalAmount");
+    const cartTotal = localStorage.getItem("totalAmount") || totalAmount.toString();
     const displayElement = document.getElementById("cartTotalDisplay");
     const upiLink = document.getElementById("upiLink");
     const payButton = document.getElementById("payButton");
 
-    if (cartTotal && !isNaN(cartTotal)) {
-        const totalAmount = parseFloat(cartTotal).toFixed(2);
-        displayElement.textContent = `Total Amount: ₹${totalAmount}`;
+    if (cartTotal && !isNaN(cartTotal) && parseFloat(cartTotal) > 0) {
+        const amount = parseFloat(cartTotal).toFixed(2);
+        displayElement.textContent = `Total Amount: ₹${amount}`;
 
         // Set your UPI details
         const upiId = "shagunverma.2004@oksbi";
         const payeeName = "Shagun Verma";
+        const transactionNote = "Sports Event Registration 2025";
 
-        // Create UPI link
-        const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${totalAmount}&cu=INR`;
+        // Create UPI link with proper encoding
+        const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
+        
+        // Update the link
         upiLink.href = upiUrl;
         payButton.disabled = false;
+        
+        console.log('UPI URL generated:', upiUrl); // For debugging
     } else {
         displayElement.textContent = "Cart total not found. Please select items first.";
         upiLink.href = "#";
         payButton.disabled = true;
     }
 }
-        function completeRegistration() {
+
+function handlePaymentClick(event) {
+    const upiLink = document.getElementById("upiLink");
+    const href = upiLink.getAttribute('href');
+    
+    if (href && href !== '#') {
+        // Prevent any default form behavior
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // Try to open the UPI app
+        window.location.href = href;
+        
+        // Show a message to the user
+        showNotification('Opening UPI app... Complete the payment and enter transaction ID below.', 'success');
+        
+        // Focus on transaction ID field after a short delay
+        setTimeout(() => {
+            const transactionField = document.getElementById('transactionId');
+            if (transactionField) {
+                transactionField.focus();
+            }
+        }, 2000);
+    } else {
+        event.preventDefault();
+        showNotification('Please select sports first before making payment.', 'error');
+    }
+}
+
+function makeUPIPayment() {
+    const cartTotal = localStorage.getItem("totalAmount") || totalAmount.toString();
+    
+    if (!cartTotal || isNaN(cartTotal) || parseFloat(cartTotal) <= 0) {
+        showNotification('Invalid payment amount. Please select sports first.', 'error');
+        return;
+    }
+
+    const amount = parseFloat(cartTotal).toFixed(2);
+    const upiId = "shagunverma.2004@oksbi";
+    const payeeName = "Shagun Verma";
+    const transactionNote = "Sports Event Registration 2025";
+
+    // Create UPI URL
+    const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(transactionNote)}`;
+    
+    console.log('Attempting to open UPI URL:', upiUrl);
+    
+    // Try multiple methods to open UPI app
+    try {
+        // Method 1: Direct window.open
+        const popup = window.open(upiUrl, '_blank');
+        
+        // Method 2: If popup blocked, try location.href
+        setTimeout(() => {
+            if (!popup || popup.closed) {
+                window.location.href = upiUrl;
+            }
+        }, 100);
+        
+        showNotification('Opening UPI app... Complete payment and enter transaction ID.', 'success');
+        
+        // Focus transaction ID field
+        setTimeout(() => {
+            const transactionField = document.getElementById('transactionId');
+            if (transactionField) {
+                transactionField.focus();
+            }
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Error opening UPI app:', error);
+        showNotification('Unable to open UPI app. Please copy the details and pay manually.', 'error');
+    }
+}
+
+function completeRegistration() {
     const transactionId = document.getElementById('transactionId').value.trim();
     if (!transactionId) {
         showNotification('Please enter a valid transaction ID.', 'error');

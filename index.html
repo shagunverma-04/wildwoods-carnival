@@ -815,10 +815,12 @@
             document.getElementById('step1').classList.add('active');
         }
 
-        function backToSports() {
-            document.getElementById('step3').classList.remove('active');
-            document.getElementById('step2').classList.add('active');
-        }
+        // Updated backToSports function - preserves localStorage
+function backToSports() {
+    document.getElementById('step3').classList.remove('active');
+    document.getElementById('step2').classList.add('active');
+    // Don't clear localStorage here so user can go back and forth
+}
 
         function toggleSport(sportId, price, cardElement) {
             const checkbox = document.getElementById(sportId);
@@ -868,12 +870,43 @@
             proceedBtn.disabled = false;
         }
 
-        function proceedToPayment() {
-            document.getElementById('step2').classList.remove('active');
-            document.getElementById('step3').classList.add('active');
-            document.getElementById('paymentAmount').textContent = `₹${totalAmount}`;
-        }
+      // Fixed proceedToPayment function - now stores totalAmount in localStorage
+function proceedToPayment() {
+    // Store the total amount in localStorage before proceeding
+    localStorage.setItem("totalAmount", totalAmount.toString());
+    
+    document.getElementById('step2').classList.remove('active');
+    document.getElementById('step3').classList.add('active');
+    
+    // Update the payment display immediately
+    updatePaymentDisplay();
+}
 
+// New function to update payment display
+function updatePaymentDisplay() {
+    const cartTotal = localStorage.getItem("totalAmount");
+    const displayElement = document.getElementById("cartTotalDisplay");
+    const upiLink = document.getElementById("upiLink");
+    const payButton = document.getElementById("payButton");
+
+    if (cartTotal && !isNaN(cartTotal)) {
+        const totalAmount = parseFloat(cartTotal).toFixed(2);
+        displayElement.textContent = `Total Amount: ₹${totalAmount}`;
+
+        // Set your UPI details
+        const upiId = "shagunverma.2004@oksbi";
+        const payeeName = "Shagun Verma";
+
+        // Create UPI link
+        const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${totalAmount}&cu=INR`;
+        upiLink.href = upiUrl;
+        payButton.disabled = false;
+    } else {
+        displayElement.textContent = "Cart total not found. Please select items first.";
+        upiLink.href = "#";
+        payButton.disabled = true;
+    }
+}
         function completeRegistration() {
     const transactionId = document.getElementById('transactionId').value.trim();
     if (!transactionId) {
@@ -939,21 +972,24 @@ fetch('http://localhost:3000/register', {
     console.error('Failed to send email:', err);
 });
 
-        function resetForm() {
-            document.getElementById('registrationForm').reset();
-            document.getElementById('step3').classList.remove('active');
-            document.getElementById('step1').classList.add('active');
-            document.getElementById('successModal').style.display = 'none';
-            selectedSports = {};
-            totalAmount = 0;
+function resetForm() {
+    document.getElementById('registrationForm').reset();
+    document.getElementById('step3').classList.remove('active');
+    document.getElementById('step1').classList.add('active');
+    document.getElementById('successModal').style.display = 'none';
+    
+    // Clear all data
+    selectedSports = {};
+    totalAmount = 0;
+    localStorage.removeItem("totalAmount"); // Clear stored amount
 
-            document.querySelectorAll('.sport-card').forEach(card => {
-                card.classList.remove('selected');
-                card.querySelector('input[type="checkbox"]').checked = false;
-            });
+    document.querySelectorAll('.sport-card').forEach(card => {
+        card.classList.remove('selected');
+        card.querySelector('input[type="checkbox"]').checked = false;
+    });
 
-            updateCart();
-        }
+    updateCart();
+}
 
         function closeModal() {
             document.getElementById('successModal').style.display = 'none';

@@ -454,6 +454,28 @@
                 margin-right: 0;
             }
         }
+
+        h1 {
+      color: #222;
+    }
+    .summary {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+    #payButton {
+      background-color: #0f9d58;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 20px;
+      border-radius: 5px;
+    }
+    #payButton:hover {
+      background-color: #0c7b43;
+    }
+
     </style>
 </head>
 <body>
@@ -647,23 +669,18 @@
             <div class="step payment-section" id="step3">
                 <h2 style="margin-bottom: 30px; color: #333;">Payment</h2>
                 
-                <div class="qr-container">
-                    <h3 style="margin-bottom: 20px;">Scan QR Code to Pay</h3>
-                    <div class="qr-code">
-                        <div style="text-align: center;">
-                            <div style="font-size: 24px; margin-bottom: 10px;">📱</div>
-                            <div>QR Code</div>
-                            <div style="font-size: 0.8em;">for Payment</div>
-                        </div>
-                    </div>
-                    <div id="paymentAmount" style="font-size: 1.5em; font-weight: bold; color: #667eea;"></div>
-                </div>
-
+                <div class="summary">
+                    <p id="cartTotalDisplay">Fetching your cart total...</p>
+                  </div>
+                
+                  <a id="upiLink" href="#">
+                    <button id="payButton">Pay via GPay / Paytm / PhonePe</button>
+                  </a>
+                
                 <div class="payment-details">
                     <h4 style="margin-bottom: 15px; color: #333;">Payment Instructions:</h4>
                     <ul style="line-height: 1.8; color: #666;">
-                        <li>Scan the QR code with any UPI app</li>
-                        <li>Enter the amount shown above</li>
+                        <li>You will be redirected to your UPI app</li>
                         <li>Complete the payment</li>
                         <li>Save the transaction ID for your records</li>
                     </ul>
@@ -714,6 +731,29 @@
     </div>
 
     <script>
+
+        // Set your UPI details
+    const upiId = "shagunverma04@oksbi";
+    const payeeName = "Shagun Verma";
+
+    // Get total amount from localStorage
+    const cartTotal = localStorage.getItem("cartTotal");
+
+    const displayElement = document.getElementById("cartTotalDisplay");
+    const upiLink = document.getElementById("upiLink");
+
+    if (cartTotal && !isNaN(cartTotal)) {
+      const totalAmount = parseFloat(cartTotal).toFixed(2);
+      displayElement.textContent = `Total Amount: ₹${totalAmount}`;
+
+      // Create UPI link
+      const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${totalAmount}&cu=INR`;
+      upiLink.href = upiUrl;
+    } else {
+      displayElement.textContent = "Cart total not found. Please select items first.";
+      upiLink.href = "#";
+      document.getElementById("payButton").disabled = true;
+    }
         let selectedSports = {};
         let totalAmount = 0;
         let registrationDatabase = []; // In-memory storage for demo
